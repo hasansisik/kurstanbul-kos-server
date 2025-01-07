@@ -210,6 +210,7 @@ const logout = async (req, res, next) => {
 //Forgot Password
 const forgotPassword = async (req, res) => {
   const { courseEmail } = req.body;
+  console.log(courseEmail);
 
   if (!courseEmail) {
     throw new CustomError.BadRequestError("Lütfen e-posta adresinizi girin.");

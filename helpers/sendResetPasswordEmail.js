@@ -1,12 +1,12 @@
 const sendEmail = require('./sendEmail');
 
-const sendResetPasswordEmail = async ({ name, email, passwordToken }) => {
+const sendResetPasswordEmail = async ({ courseName, courseEmail, passwordToken }) => {
     const message = `<p>Şifre Sıfırlama Kodunuz: ${passwordToken}</p>`;
 
     return sendEmail({
-        to: email,
+        to: courseEmail,
         subject: 'Şifre Sıfırla',
-        html: `<h4>Merhaba, ${name}</h4>${message}`,
+        html: `<h4>Merhaba, ${courseName}</h4>${message}`,
     });
 };
 
