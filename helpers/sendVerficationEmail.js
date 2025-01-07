@@ -1,16 +1,16 @@
 const sendEmail = require('./sendEmail');
 
 const sendVerificationEmail = async ({
-  name,
-  email,
+  courseName,
+  courseEmail,
   verificationCode,
 }) => {
   const message = `<p>Doğrulama kodunuz: ${verificationCode}</p>`;
 
   return sendEmail({
-    to: email,
+    to: courseEmail,
     subject: 'Kurstanbul Mail Doğrulama',
-    html: `<h4> Merhaba, ${name}</h4>
+    html: `<h4> Merhaba, ${courseName}</h4>
     ${message}
     `,
   });

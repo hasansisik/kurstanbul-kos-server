@@ -54,7 +54,7 @@ const register = async (req, res, next) => {
   try {
     const { courseName,courseAdress,courseTel, courseEmail, password } = req.body;
     //check email
-    const emailAlreadyExists = await Course.findOne({ email });
+    const emailAlreadyExists = await Course.findOne({ courseEmail });
     if (emailAlreadyExists) {
       throw new CustomError.BadRequestError("Bu e-posta adresi zaten kayıtlı.");
     }
@@ -87,8 +87,8 @@ const register = async (req, res, next) => {
     });
 
     await sendVerificationEmail({
-      name: course.name,
-      email: course.email,
+      courseName: course.courseName,
+      courseEmail: course.courseEmail,
       verificationCode: course.verificationCode,
     });
 

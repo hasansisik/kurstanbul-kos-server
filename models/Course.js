@@ -5,7 +5,7 @@ const bcrypt = require("bcrypt");
 
 const CourseSchema = new Schema(
   {
-    courseCode: { type: String, required: true },
+    courseCode: { type: String },
     courseName: { type: String, required: true },
     courseEmail: {
       type: String,
