@@ -10,13 +10,13 @@ const isAuthenticated = async function (req, res, next) {
     if (err) {
       return next(createHttpError.Unauthorized());
     }
-    req.user = payload;
+    req.course = payload;
     next();
   });
 };
 
 const isAdmin = async function (req, res, next) {
-  if (req.user.role !== "admin") {
+  if (req.course.role !== "admin") {
     return next(createHttpError.Unauthorized());
   }
   next();
