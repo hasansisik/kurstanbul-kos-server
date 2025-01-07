@@ -1,4 +1,4 @@
-const User = require("../models/User");
+const Course = require("../models/Course");
 const Token = require("../models/Token");
 const { StatusCodes } = require("http-status-codes");
 const CustomError = require("../errors");
@@ -9,7 +9,7 @@ const { generateToken } = require("../services/token.service");
 const verifyEmail = async (req, res) => {
   const { email, verificationCode } = req.body;
 
-  const user = await User.findOne({ email });
+  const user = await Course.findOne({ email });
 
   if (!user) {
     return res.status(400).json({ message: "Kullanıcı bulunamadı." });
@@ -30,7 +30,7 @@ const verifyEmail = async (req, res) => {
 const againEmail = async (req, res) => {
   const { email } = req.body;
 
-  const user = await User.findOne({ email });
+  const user = await Course.findOne({ email });
 
   if (!user) {
     throw new Error("Kullanıcı bulunamadı.");
@@ -52,9 +52,9 @@ const againEmail = async (req, res) => {
 //Register
 const register = async (req, res, next) => {
   try {
-    const { name, email, password, picture } = req.body;
+    const { courseName,courseAdress,courseTel, courseEmail, password } = req.body;
     //check email
-    const emailAlreadyExists = await User.findOne({ email });
+    const emailAlreadyExists = await Course.findOne({ email });
     if (emailAlreadyExists) {
       throw new CustomError.BadRequestError("Bu e-posta adresi zaten kayıtlı.");
     }
@@ -62,47 +62,45 @@ const register = async (req, res, next) => {
     //token create
     const verificationCode = Math.floor(1000 + Math.random() * 9000);
 
-    const user = new User({
-      name,
-      email,
-      password,
-      picture,
+    const course = new Course({
+      courseName,courseAdress,courseTel, courseEmail, password,
       verificationCode,
     });
 
-    await user.save();
+    await course.save();
 
     const accessToken = await generateToken(
-      { userId: user._id },
+      { courseId: course._id },
       "1d",
       process.env.ACCESS_TOKEN_SECRET
     );
     const refreshToken = await generateToken(
-      { userId: user._id },
+      { courseId: course._id },
       "30d",
       process.env.REFRESH_TOKEN_SECRET
     );
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      path: "/v1/auth/refreshtoken",
+      path: "/v1/course/refreshtoken",
       maxAge: 30 * 24 * 60 * 60 * 1000, //30 days
     });
 
     await sendVerificationEmail({
-      name: user.name,
-      email: user.email,
-      verificationCode: user.verificationCode,
+      name: course.name,
+      email: course.email,
+      verificationCode: course.verificationCode,
     });
 
     res.json({
       message:
-        "Kullanıcı başarıyla oluşturuldu. Lütfen email adresini doğrula.",
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        picture: user.picture,
+        "Sürücü başarıyla oluşturuldu. Lütfen email adresini doğrulayın.",
+        course: {
+        _id: course._id,
+        courseName: course.courseName,
+        courseEmail: course.courseEmail,
+        courseAdress: course.courseAdress,
+        courseTel: course.courseTel,
         token: accessToken,
       },
     });
@@ -121,7 +119,7 @@ const login = async (req, res, next) => {
         "Lütfen e-posta adresinizi ve şifrenizi girin"
       );
     }
-    const user = await User.findOne({ email });
+    const user = await Course.findOne({ email });
 
     if (!user) {
       throw new CustomError.UnauthenticatedError(
@@ -152,7 +150,7 @@ const login = async (req, res, next) => {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      path: "/v1/auth/refreshtoken",
+      path: "/v1/course/refreshtoken",
       maxAge: 30 * 24 * 60 * 60 * 1000, //30 days
     });
 
@@ -184,7 +182,7 @@ const login = async (req, res, next) => {
 
 //Get My Profile
 const getMyProfile = async (req, res, next) => {
-  const user = await User.findById(req.user.userId);
+  const user = await Course.findById(req.user.userId);
 
   res.status(200).json({
     success: true,
@@ -215,7 +213,7 @@ const forgotPassword = async (req, res) => {
     throw new CustomError.BadRequestError("Lütfen e-posta adresinizi girin.");
   }
 
-  const user = await User.findOne({ email });
+  const user = await Course.findOne({ email });
 
   if (user) {
     const passwordToken = Math.floor(1000 + Math.random() * 9000);
@@ -251,7 +249,7 @@ const resetPassword = async (req, res) => {
         "Lütfen sıfırlama kodunu ve yeni şifrenizi girin."
       );
     }
-    const user = await User.findOne({ email });
+    const user = await Course.findOne({ email });
 
     if (user) {
       const currentDate = new Date();
@@ -309,7 +307,7 @@ const editProfile = async (req, res) => {
         .send({ error: "Sistem hatası oluştu. Lütfen tekrar deneyin" });
     }
 
-    const user = await User.findById(req.user.userId);
+    const user = await Course.findById(req.user.userId);
 
     if (!user) {
       return res.status(404).json({

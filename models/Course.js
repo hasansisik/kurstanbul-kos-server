@@ -3,31 +3,32 @@ const Schema = mongoose.Schema;
 const validator = require("validator");
 const bcrypt = require("bcrypt");
 
-const UserSchema = new Schema(
+const CourseSchema = new Schema(
   {
-    name: { type: String, required: true },
-    email: {
+    courseCode: { type: String, required: true },
+    courseName: { type: String, required: true },
+    courseEmail: {
       type: String,
       required: [true, "Please provide tour email address"],
       unqiue: [true, "This email address already exist"],
       lowercase: true,
       validate: [validator.isEmail, "Please provide a valid email address"],
     },
-    role: {
+    subs: {
       type: String,
-      enum: ["admin", "user"],
-      default: "user",
+      enum: ["basic", "premium","elite"],
+      default: "elite",
     },
     password: {
       type: String,
       required: true,
       minlength: 8,
     },
-    address: {
+    courseAdress: {
       type: String,
       trim: true,
     },
-    phoneNumber: {
+    courseTel: {
       type: String,
       validate: {
         validator: function (v) {
@@ -35,10 +36,6 @@ const UserSchema = new Schema(
         },
         message: (props) => `${props.value} is not a valid phone number!`,
       },
-    },
-    picture: {
-      type: String,
-      default: "https://cdn-icons-png.freepik.com/512/8188/8188362.png",
     },
     verificationCode: { type: Number },
     isVerified: { type: Boolean, default: false },
@@ -48,17 +45,17 @@ const UserSchema = new Schema(
   { timestamps: true }
 );
 
-UserSchema.pre("save", async function () {
+CourseSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
 
-UserSchema.methods.comparePassword = async function (candidatePassword) {
+CourseSchema.methods.comparePassword = async function (candidatePassword) {
   const isMatch = await bcrypt.compare(candidatePassword, this.password);
   return isMatch;
 };
 
-const User = mongoose.model("User", UserSchema);
+const Course = mongoose.model("Course", CourseSchema);
 
-module.exports = User;
+module.exports = Course;

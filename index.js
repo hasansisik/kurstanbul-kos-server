@@ -12,7 +12,7 @@ const cookieParser = require('cookie-parser');
 const connectDB = require('./config/connectDB');
 
 //routers
-const authRouter = require('./routers/auth');
+const authRouter = require('./routers/course');
 
 //midlleware
 const notFoundMiddleware = require('./middleware/not-found')
@@ -27,7 +27,7 @@ app.use(express.static('./public'));
 
 app.use(express.urlencoded({ extended: true }));
 
-app.use('/v1/auth', authRouter);
+app.use('/v1/course', authRouter);
 
 app.use(notFoundMiddleware);
 app.use(erorHandlerMiddleware);
