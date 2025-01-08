@@ -56,6 +56,6 @@ CourseSchema.methods.comparePassword = async function (candidatePassword) {
   return isMatch;
 };
 
-const Course = mongoose.model("Course", CourseSchema);
+const Company = mongoose.model("Company", CourseSchema);
 
-module.exports = Course;
+module.exports = Company;

@@ -8,7 +8,7 @@ const TokenSchema = new Schema(
     ip: { type: String, required: true },
     userAgent: { type: String, required: true },
     isValid: { type: Boolean, default: true },
-    course: { type: mongoose.Types.ObjectId, ref: "Course", required: true },
+    company: { type: mongoose.Types.ObjectId, ref: "company", required: true },
   },
   { timestamps: true }
 );

@@ -1,5 +1,5 @@
-const Course = require("../models/Course");
-const Token = require("../models/Token");
+const Company = require("../models/Company");
+const Token = require("../models/CompanyToken");
 const { StatusCodes } = require("http-status-codes");
 const CustomError = require("../errors");
 const { sendResetPasswordEmail, sendVerificationEmail } = require("../helpers");
@@ -9,19 +9,19 @@ const { generateToken } = require("../services/token.service");
 const verifyEmail = async (req, res) => {
   const { courseEmail, verificationCode } = req.body;
 
-  const course = await Course.findOne({ courseEmail });
+  const company = await Company.findOne({ courseEmail });
 
-  if (!course) {
+  if (!company) {
     return res.status(400).json({ message: "Kullanıcı bulunamadı." });
   }
 
-  if (course.verificationCode !== Number(verificationCode)) {
+  if (company.verificationCode !== Number(verificationCode)) {
     return res.status(400).json({ message: "Doğrulama kodu yanlış." });
   }
 
-  course.isVerified = true;
-  course.verificationCode = "";
-  await course.save();
+  company.isVerified = true;
+  company.verificationCode = "";
+  await company.save();
 
   res.json({ message: "Hesap başarıyla doğrulandı." });
 };
@@ -30,21 +30,21 @@ const verifyEmail = async (req, res) => {
 const againEmail = async (req, res) => {
   const { courseEmail } = req.body;
 
-  const course = await Course.findOne({ courseEmail });
+  const company = await Company.findOne({ courseEmail });
 
-  if (!course) {
+  if (!company) {
     throw new Error("Kullanıcı bulunamadı.");
   }
 
   const verificationCode = Math.floor(1000 + Math.random() * 9000);
 
-  course.verificationCode = verificationCode;
-  await course.save();
+  company.verificationCode = verificationCode;
+  await company.save();
 
   await sendVerificationEmail({
-    courseName: course.courseName,
-    courseEmail: course.courseEmail,
-    verificationCode: course.verificationCode,
+    courseName: company.courseName,
+    courseEmail: company.courseEmail,
+    verificationCode: company.verificationCode,
   });
   res.json({ message: "Doğrulama kodu Gönderildi" });
 };
@@ -54,7 +54,7 @@ const register = async (req, res, next) => {
   try {
     const { courseName,courseAdress,courseTel, courseEmail, password } = req.body;
     //check email
-    const emailAlreadyExists = await Course.findOne({ courseEmail });
+    const emailAlreadyExists = await Company.findOne({ courseEmail });
     if (emailAlreadyExists) {
       throw new CustomError.BadRequestError("Bu e-posta adresi zaten kayıtlı.");
     }
@@ -62,45 +62,45 @@ const register = async (req, res, next) => {
     //token create
     const verificationCode = Math.floor(1000 + Math.random() * 9000);
 
-    const course = new Course({
+    const company = new Company({
       courseName,courseAdress,courseTel, courseEmail, password,
       verificationCode,
     });
 
-    await course.save();
+    await company.save();
 
     const accessToken = await generateToken(
-      { courseId: course._id },
+      { courseId: company._id },
       "1d",
       process.env.ACCESS_TOKEN_SECRET
     );
     const refreshToken = await generateToken(
-      { courseId: course._id },
+      { courseId: company._id },
       "30d",
       process.env.REFRESH_TOKEN_SECRET
     );
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      path: "/v1/course/refreshtoken",
+      path: "/v1/company/refreshtoken",
       maxAge: 30 * 24 * 60 * 60 * 1000, //30 days
     });
 
     await sendVerificationEmail({
-      courseName: course.courseName,
-      courseEmail: course.courseEmail,
-      verificationCode: course.verificationCode,
+      courseName: company.courseName,
+      courseEmail: company.courseEmail,
+      verificationCode: company.verificationCode,
     });
 
     res.json({
       message:
         "Sürücü başarıyla oluşturuldu. Lütfen email adresini doğrulayın.",
-        course: {
-        _id: course._id,
-        courseName: course.courseName,
-        courseEmail: course.courseEmail,
-        courseAdress: course.courseAdress,
-        courseTel: course.courseTel,
+        company: {
+        _id: company._id,
+        courseName: company.courseName,
+        courseEmail: company.courseEmail,
+        courseAdress: company.courseAdress,
+        courseTel: company.courseTel,
         token: accessToken,
       },
     });
@@ -119,38 +119,38 @@ const login = async (req, res, next) => {
         "Lütfen e-posta adresinizi ve şifrenizi girin"
       );
     }
-    const course = await Course.findOne({ courseEmail });
+    const company = await Company.findOne({ courseEmail });
 
-    if (!course) {
+    if (!company) {
       throw new CustomError.UnauthenticatedError(
         "Ne yazık ki böyle bir kullanıcı yok"
       );
     }
-    const isPasswordCorrect = await course.comparePassword(password);
+    const isPasswordCorrect = await company.comparePassword(password);
 
     if (!isPasswordCorrect) {
       throw new CustomError.UnauthenticatedError("Kayıtlı şifreniz yanlış!");
     }
-    if (!course.isVerified) {
+    if (!company.isVerified) {
       throw new CustomError.UnauthenticatedError(
         "Lütfen e-postanızı doğrulayın !"
       );
     }
 
     const accessToken = await generateToken(
-      { courseId: course._id },
+      { courseId: company._id },
       "1d",
       process.env.ACCESS_TOKEN_SECRET
     );
     const refreshToken = await generateToken(
-      { courseId: course._id },
+      { courseId: company._id },
       "30d",
       process.env.REFRESH_TOKEN_SECRET
     );
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      path: "/v1/course/refreshtoken",
+      path: "/v1/company/refreshtoken",
       maxAge: 30 * 24 * 60 * 60 * 1000, //30 days
     });
 
@@ -159,21 +159,21 @@ const login = async (req, res, next) => {
       accessToken,
       ip: req.ip,
       userAgent: req.headers["user-agent"],
-      course: course._id,
+      company: company._id,
     });
 
     await token.save();
 
     res.json({
       message: "Giriş Başarılı",
-      course: {
-        _id: course._id,
-        courseName: course.courseName,
-        courseEmail: course.courseEmail,
-        courseAdress: course.courseAdress,
-        courseTel: course.courseTel,
-        subs: course.subs,
-        status: course.status,
+      company: {
+        _id: company._id,
+        courseName: company.courseName,
+        courseEmail: company.courseEmail,
+        courseAdress: company.courseAdress,
+        courseTel: company.courseTel,
+        subs: company.subs,
+        status: company.status,
         token: accessToken,
       },
     });
@@ -184,20 +184,20 @@ const login = async (req, res, next) => {
 
 //Get My Profile
 const getMyProfile = async (req, res, next) => {
-  const course = await Course.findById(req.course.courseId);
+  const company = await Company.findById(req.company.courseId);
 
   res.status(200).json({
     success: true,
-    course,
+    company,
   });
 };
 
 //Logout
 const logout = async (req, res, next) => {
   try {
-    await Token.findOneAndDelete({ course: req.course.courseId });
+    await Token.findOneAndDelete({ company: req.company.courseId });
 
-    res.clearCookie("refreshtoken", { path: "/v1/course/refreshtoken" });
+    res.clearCookie("refreshtoken", { path: "/v1/company/refreshtoken" });
 
     res.json({
       message: "logged out !",
@@ -216,24 +216,24 @@ const forgotPassword = async (req, res) => {
     throw new CustomError.BadRequestError("Lütfen e-posta adresinizi girin.");
   }
 
-  const course = await Course.findOne({ courseEmail });
+  const company = await Company.findOne({ courseEmail });
 
-  if (course) {
+  if (company) {
     const passwordToken = Math.floor(1000 + Math.random() * 9000);
 
     await sendResetPasswordEmail({
-      courseName: course.courseName,
-      courseEmail: course.courseEmail,
+      courseName: company.courseName,
+      courseEmail: company.courseEmail,
       passwordToken: passwordToken,
     });
 
     const tenMinutes = 1000 * 60 * 10;
     const passwordTokenExpirationDate = new Date(Date.now() + tenMinutes);
 
-    course.passwordToken = passwordToken;
-    course.passwordTokenExpirationDate = passwordTokenExpirationDate;
+    company.passwordToken = passwordToken;
+    company.passwordTokenExpirationDate = passwordTokenExpirationDate;
 
-    await course.save();
+    await company.save();
   } else {
     throw new CustomError.BadRequestError("Kullanıcı bulunamadı.");
   }
@@ -252,21 +252,21 @@ const resetPassword = async (req, res) => {
         "Lütfen sıfırlama kodunu ve yeni şifrenizi girin."
       );
     }
-    const course = await Course.findOne({ courseEmail });
+    const company = await Company.findOne({ courseEmail });
 
-    if (course) {
+    if (company) {
       const currentDate = new Date();
 
-      if (course.passwordToken === passwordToken) {
-        if (currentDate > course.passwordTokenExpirationDate) {
+      if (company.passwordToken === passwordToken) {
+        if (currentDate > company.passwordTokenExpirationDate) {
           throw new CustomError.BadRequestError(
             "Kodunuz süresi doldu. Lütfen tekrar deneyin."
           );
         }
-        course.password = newPassword;
-        course.passwordToken = null;
-        course.passwordTokenExpirationDate = null;
-        await course.save();
+        company.password = newPassword;
+        company.passwordToken = null;
+        company.passwordTokenExpirationDate = null;
+        await company.save();
         res.json({
           message: "Şifre başarıyla sıfırlandı.",
         });
@@ -310,35 +310,35 @@ const editProfile = async (req, res) => {
         .send({ error: "Sistem hatası oluştu. Lütfen tekrar deneyin" });
     }
 
-    const course = await Course.findById(req.course.courseId);
+    const company = await Company.findById(req.company.courseId);
 
-    if (!course) {
+    if (!company) {
       return res.status(404).json({
         message: "Kullanıcı bulunamadı.",
       });
     }
 
-    if (req.body.courseEmail && req.body.courseEmail !== req.course.courseEmail) {
-      updates.forEach((update) => (req.course[update] = req.body[update]));
+    if (req.body.courseEmail && req.body.courseEmail !== req.company.courseEmail) {
+      updates.forEach((update) => (req.company[update] = req.body[update]));
 
       const verificationCode = Math.floor(1000 + Math.random() * 9000);
-      course.verificationCode = verificationCode;
-      course.isVerified = false;
-      await course.save();
+      company.verificationCode = verificationCode;
+      company.isVerified = false;
+      await company.save();
 
       await sendVerificationEmail({
-        courseName: req.course.courseName,
-        courseEmail: req.course.courseEmail,
+        courseName: req.company.courseName,
+        courseEmail: req.company.courseEmail,
         verificationCode: verificationCode,
       });
     }
 
     updates.forEach((update) => {
       if (req.body[update]) {
-        course[update] = req.body[update];
+        company[update] = req.body[update];
       }
     });
-    await course.save();
+    await company.save();
 
     res.json({
       message: "Profil başarıyla güncellendi.",

@@ -9,7 +9,7 @@ const {
   verifyEmail,
   againEmail,
   editProfile,
-} = require("../controllers/course");
+} = require("../controllers/company");
 const { isAuthenticated } = require("../middleware/authMiddleware");
 
 const router = express.Router();
