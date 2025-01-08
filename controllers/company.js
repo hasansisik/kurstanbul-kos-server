@@ -52,7 +52,7 @@ const againEmail = async (req, res) => {
 //Register
 const register = async (req, res, next) => {
   try {
-    const { courseName,courseAdress,courseTel, courseEmail, password } = req.body;
+    const { courseName,courseAdress,courseTel, courseEmail, password,courseCode } = req.body;
     //check email
     const emailAlreadyExists = await Company.findOne({ courseEmail });
     if (emailAlreadyExists) {
@@ -63,7 +63,7 @@ const register = async (req, res, next) => {
     const verificationCode = Math.floor(1000 + Math.random() * 9000);
 
     const company = new Company({
-      courseName,courseAdress,courseTel, courseEmail, password,
+      courseName,courseAdress,courseTel, courseEmail, password,courseCode,
       verificationCode,
     });
 
@@ -100,6 +100,7 @@ const register = async (req, res, next) => {
         courseName: company.courseName,
         courseEmail: company.courseEmail,
         courseAdress: company.courseAdress,
+        courseCode: company.courseCode,
         courseTel: company.courseTel,
         token: accessToken,
       },
